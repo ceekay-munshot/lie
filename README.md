@@ -55,5 +55,18 @@ CLAUDE.md                         # architecture, conventions, palette, roadmap
 - **Dates** are handled in IST (Asia/Kolkata).
 - **LLM keys** come from environment / secrets only — never committed.
 
+## Deploy
+
+The site is built as a **Cloudflare Worker** (`wrangler.jsonc` + `worker/index.js`), which
+serves `public/` and owns `/api/*`. Two ways to ship it:
+
+- **Cloudflare Pages** (static-first, current preview). In the Pages project settings set
+  **Build output directory = `public`** (leave the build command empty). `public/_redirects`
+  provides the SPA fallback so client-side routes don't 404. Note: `/api/*` does not run on
+  Pages until those stubs are ported to Pages Functions (a later prompt); the home page is
+  fully static and needs no API.
+- **Cloudflare Workers** (full `/api/*` + SPA fallback): `npx wrangler deploy` after
+  `npx wrangler login`, or connect the repo via Cloudflare "Workers Builds" for auto-deploy.
+
 See [CLAUDE.md](./CLAUDE.md) for the full architecture, the data contract, the colour
 palette and the 12-prompt roadmap.
