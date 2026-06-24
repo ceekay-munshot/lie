@@ -1,0 +1,18 @@
+{
+  // Lie Detector — Cloudflare Worker + static assets.
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lie-detector",
+  "main": "worker/index.js",
+  "compatibility_date": "2025-04-01",
+  "assets": {
+    // Static site lives in ./public and is served via the ASSETS binding.
+    // With a Worker present, matching static assets are served first; any
+    // unmatched request falls through to worker/index.js (SPA fallback + /api/*).
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
