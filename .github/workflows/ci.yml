@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate data contract + LLM config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Validates every public/data/companies/*.json against the schema (data contract).
+      - name: Validate company JSON against schema
+        run: npm run validate
+      # Confirms the LLM client resolves config and prints "config OK" with no key set.
+      - name: LLM client self-test (no key)
+        run: npm run llm:selftest
+
+  # Self-serve preview: deploys public/ to GitHub Pages on every push to main.
+  # No external accounts or secrets — uses the repo's own GitHub Pages.
+  # Site URL: https://<owner>.github.io/<repo>/  (e.g. .../lie/).
+  deploy-pages:
+    name: Deploy preview to GitHub Pages
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload static site (public/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+  # Optional production deploy to Cloudflare Workers. Skips cleanly until the
+  # CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID repo secrets are provided, so
+  # this never turns CI red when the secrets are absent.
+  deploy-workers:
+    name: Deploy to Cloudflare Workers (optional)
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect Cloudflare credentials
+        id: cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping Workers deploy (GitHub Pages is the active preview)."
+          fi
+      - name: Deploy (wrangler deploy)
+        if: steps.cf.outputs.enabled == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

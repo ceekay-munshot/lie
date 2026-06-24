@@ -57,16 +57,25 @@ CLAUDE.md                         # architecture, conventions, palette, roadmap
 
 ## Deploy
 
-The site is built as a **Cloudflare Worker** (`wrangler.jsonc` + `worker/index.js`), which
-serves `public/` and owns `/api/*`. Two ways to ship it:
+The whole app is static (it reads committed JSON under `public/data/`), so it can be hosted
+two ways. Asset/data paths are resolved relative to the page, so the site works both at a
+domain root and under a project subpath.
 
-- **Cloudflare Pages** (static-first, current preview). In the Pages project settings set
-  **Build output directory = `public`** (leave the build command empty). `public/_redirects`
-  provides the SPA fallback so client-side routes don't 404. Note: `/api/*` does not run on
-  Pages until those stubs are ported to Pages Functions (a later prompt); the home page is
-  fully static and needs no API.
-- **Cloudflare Workers** (full `/api/*` + SPA fallback): `npx wrangler deploy` after
-  `npx wrangler login`, or connect the repo via Cloudflare "Workers Builds" for auto-deploy.
+- **GitHub Pages (preview — no accounts/secrets).** `.github/workflows/ci.yml` publishes
+  `public/` to GitHub Pages on every push to `main`. One-time: **repo Settings → Pages →
+  Build and deployment → Source = "GitHub Actions"** (the workflow also tries to enable this
+  automatically). Site URL: `https://<owner>.github.io/<repo>/` — here
+  **https://ceekay-munshot.github.io/lie/**. `/api/*` does not run on Pages, but the UI reads
+  the JSON datastore directly, so it doesn't need it.
+- **Cloudflare Workers (production — optional).** The repo is also a Worker
+  (`wrangler.jsonc` + `worker/index.js`) that serves `public/` via the `ASSETS` binding and
+  owns `/api/*`. CI deploys it on push to `main` **only if** `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID` repo secrets are set (otherwise the step skips cleanly); or run
+  `npx wrangler login && npx wrangler deploy` locally.
+
+> This repo does **not** use Cloudflare Pages. If a `lie-ekp` Pages project is still
+> connected, deleting it stops its 404 deployments (Cloudflare dashboard → Workers & Pages →
+> `lie-ekp` → Settings → Delete project).
 
 See [CLAUDE.md](./CLAUDE.md) for the full architecture, the data contract, the colour
 palette and the 12-prompt roadmap.

@@ -161,12 +161,16 @@ if (typeof window !== "undefined" && window.echarts && typeof window.echarts.reg
 }
 
 /* ------------------------------------------------------------------ *
- * Datastore loaders — read committed JSON under /data/companies/.
+ * Datastore loaders — read committed JSON under <base>/data/companies/.
+ * The directory is resolved relative to THIS module's URL so the app works
+ * both at a domain root (Cloudflare Workers: /js/ui.js) and under a project
+ * subpath (GitHub Pages: /lie/js/ui.js).
  * ------------------------------------------------------------------ */
+const DATA_DIR = new URL("../data/companies/", import.meta.url);
 
 /** Load the company index (array of summary cards). */
 export async function loadIndex() {
-  const res = await fetch("/data/companies/index.json", { cache: "no-cache" });
+  const res = await fetch(new URL("index.json", DATA_DIR), { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load company index (HTTP ${res.status})`);
   return res.json();
 }
@@ -175,7 +179,7 @@ export async function loadIndex() {
 export async function loadCompany(ticker) {
   const t = String(ticker ?? "").trim().toLowerCase();
   if (!t) throw new Error("loadCompany: ticker is required");
-  const res = await fetch(`/data/companies/${t}.json`, { cache: "no-cache" });
+  const res = await fetch(new URL(`${encodeURIComponent(t)}.json`, DATA_DIR), { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load company "${ticker}" (HTTP ${res.status})`);
   return res.json();
 }

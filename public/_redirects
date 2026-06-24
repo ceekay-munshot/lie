@@ -1,6 +1,0 @@
-# Cloudflare Pages SPA fallback.
-# Real static files (e.g. /js/app.js, /data/companies/*.json) are served first;
-# any other path falls back to the app shell so client-side routes don't 404.
-# (On the Cloudflare Workers deploy this file is unused — worker/index.js does
-#  the same fallback. /api/* becomes a Pages Function in a later prompt.)
-/*    /index.html   200
