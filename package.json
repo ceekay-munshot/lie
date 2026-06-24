@@ -1,0 +1,14 @@
+{
+  "name": "lie-detector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lie Detector — extract, verify and score measurable management commitments from Indian earnings calls.",
+  "scripts": {
+    "validate": "npm i --no-save --no-package-lock --no-fund --no-audit ajv ajv-formats && node pipeline/validate.mjs",
+    "llm:selftest": "node pipeline/lib/llm.mjs --selftest",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  },
+  "license": "UNLICENSED"
+}
