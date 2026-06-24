@@ -476,6 +476,7 @@
       <footer class="foot" id="foot"><!-- rendered by app.js --></footer>
     </div>
 
-    <script type="module" src="/js/app.js"></script>
+    <!-- Relative src so the app loads at a domain root (Workers) and under a project subpath (GitHub Pages). -->
+    <script type="module" src="./js/app.js"></script>
   </body>
 </html>
